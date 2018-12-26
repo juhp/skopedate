@@ -1,0 +1,29 @@
+cabal-version:       2.0
+name:                skopedate
+version:             0.0.0
+synopsis:            Check dates of container images
+description:         Check dates of container images
+license:             MIT
+license-file:        LICENSE
+author:              Jens Petersen
+maintainer:          petersen@redhat.com
+copyright:           2018 Jens Petersen
+category:            Utility
+build-type:          Simple
+extra-doc-files:     README.md
+                   , CHANGELOG.md
+tested-with:         GHC == 8.4.4
+
+executable skopedate
+  main-is:             Main.hs
+
+  build-depends:       base < 5
+                     , bytestring
+                     , simple-cmd > 0.2
+                     , aeson
+                     , text
+                     , time
+
+  ghc-options:         -Wall
+
+  default-language:    Haskell2010
