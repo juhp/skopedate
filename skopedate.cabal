@@ -17,10 +17,12 @@ tested-with:         GHC == 8.4.4
 executable skopedate
   main-is:             Main.hs
 
-  build-depends:       base < 5
+  build-depends:       aeson
+                     , base < 5
                      , bytestring
                      , simple-cmd > 0.2
-                     , aeson
+                     , microlens
+                     , microlens-aeson
                      , text
                      , time
 
