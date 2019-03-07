@@ -2,18 +2,20 @@
 
 module Main (main) where
 
-import SimpleCmd
 -- import Data.Aeson
+import Data.Maybe (catMaybes)
 import Data.List (sortBy)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
-import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeOrError)
+import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Data.Text (Text)
 import qualified Data.Text as T
 import System.Environment (getArgs)
 
 import Lens.Micro
 import Lens.Micro.Aeson
+
+import SimpleCmd
 
 
 main :: IO ()
@@ -23,14 +25,12 @@ main = do
   checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org"] image
 --  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
 
+type Result = (UTCTime, String)
+
 checkRegistries :: [String] -> String -> IO ()
 checkRegistries rs image = do
-  let refs = map (\ r -> "docker://" ++ r ++ "/" ++ image) rs
-  times <- mapM skopeoInspectTime refs
---      utc = zonedTimeToUTC created
---  lzt <- utcToLocalZonedTime utc
-  mapM_ printTime $ sortBy timeOrder $ zip times rs
---  return created -- utc
+  results <- catMaybes <$> mapM skopeoInspectTime rs
+  mapM_ printTime $ sortBy timeOrder results
   where
     timeOrder (t,_) (t',_) = compare t' t
 
@@ -38,12 +38,19 @@ checkRegistries rs image = do
       t <- utcToLocalZonedTime u
       putStrLn $ show t ++ " " ++ s
 
-skopeoInspectTime :: String -> IO UTCTime
-skopeoInspectTime ref = do
-  out <- cmd "skopeo" ["inspect", ref] :: IO Text
-  let created = out ^. key "Created" . _String & T.unpack & removeSplitSecs
-  return $ parseTimeOrError False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
-  where
+    skopeoInspectTime :: String -> IO (Maybe Result)
+    skopeoInspectTime reg = do
+      let ref = "docker://" ++ reg ++ "/" ++ image
+      mout <- cmdMaybe "skopeo" ["inspect", ref] :: IO (Maybe Text)
+      return $ maybeParseTime mout
+        where
+          maybeParseTime :: Maybe Text -> Maybe Result
+          maybeParseTime mtxt = do
+            txt <- mtxt
+            created <- txt ^? key "Created" . _String <&> T.unpack <&> removeSplitSecs
+            utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
+            return (utc,reg)
+
     -- docker.io has nanosec!
     removeSplitSecs :: String -> String
     removeSplitSecs cs =
