@@ -41,8 +41,8 @@ checkRegistries rs image = do
     skopeoInspectTime :: String -> IO (Maybe Result)
     skopeoInspectTime reg = do
       let ref = "docker://" ++ reg ++ "/" ++ image
-      mout <- cmdMaybe "skopeo" ["inspect", ref] :: IO (Maybe Text)
-      return $ maybeParseTime mout
+      mout <- cmdMaybe "skopeo" ["inspect", ref]
+      return $ maybeParseTime (T.pack <$> mout)
         where
           maybeParseTime :: Maybe Text -> Maybe Result
           maybeParseTime mtxt = do

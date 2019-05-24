@@ -20,7 +20,7 @@ executable skopedate
   build-depends:       aeson
                      , base < 5
                      , bytestring
-                     , simple-cmd > 0.2
+                     , simple-cmd
                      , microlens
                      , microlens-aeson
                      , text
