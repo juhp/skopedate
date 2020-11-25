@@ -1,6 +1,6 @@
 cabal-version:       2.0
 name:                skopedate
-version:             0.0.0
+version:             0.1
 synopsis:            Check dates of container images
 description:         Check dates of container images
 license:             MIT
@@ -12,7 +12,7 @@ category:            Utility
 build-type:          Simple
 extra-doc-files:     README.md
                    , CHANGELOG.md
-tested-with:         GHC == 8.4.4
+tested-with:         GHC == 8.4.4, GHC == 8.6.5, GHC == 8.8.4
 
 executable skopedate
   main-is:             Main.hs

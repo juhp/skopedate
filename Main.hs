@@ -19,6 +19,7 @@ import Lens.Micro.Aeson
 import SimpleCmd
 
 
+-- FIXME add --pull
 main :: IO ()
 main = do
   args <- getArgs
