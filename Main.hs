@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Control.Monad
 -- import Data.Aeson
 import Data.Maybe (catMaybes)
 import Data.List (sortBy)
@@ -21,6 +22,7 @@ import SimpleCmd
 main :: IO ()
 main = do
   args <- getArgs
+  when (null args) $ error' "Please specify an image"
   let image = head args
   -- FIXME be smarter about registry list based on image name
   -- also handle UBI
