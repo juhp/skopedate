@@ -22,6 +22,9 @@ main :: IO ()
 main = do
   args <- getArgs
   let image = head args
+  -- FIXME be smarter about registry list based on image name
+  -- also handle UBI
+  -- FIXME make registries configurable
   checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org","registry.centos.org"] image
 --  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
 
