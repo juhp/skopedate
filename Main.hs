@@ -22,7 +22,7 @@ main :: IO ()
 main = do
   args <- getArgs
   let image = head args
-  checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org"] image
+  checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org","registry.centos.org"] image
 --  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
 
 type Result = (UTCTime, String)
