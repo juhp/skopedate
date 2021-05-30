@@ -3,18 +3,16 @@
 module Main (main) where
 
 import Control.Monad
--- import Data.Aeson
+import Data.Aeson
+import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Maybe (catMaybes)
-import Data.List (sortBy)
+import Data.List (sortOn)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
-import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Tuple.Extra
+import Network.HTTP.Query (lookupKey)
 import System.Environment (getArgs)
-
-import Lens.Micro
-import Lens.Micro.Aeson
 
 import SimpleCmd
 
@@ -31,31 +29,31 @@ main = do
   checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org","registry.centos.org"] image
 --  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
 
-type Result = (UTCTime, String)
+type Image = (UTCTime, String, String)
 
 checkRegistries :: [String] -> String -> IO ()
 checkRegistries rs image = do
-  results <- catMaybes <$> mapM skopeoInspectTime rs
-  mapM_ printTime $ sortBy timeOrder results
+  results <- catMaybes <$> mapM skopeoInspectTimeRel rs
+  mapM_ printTime $ sortOn fst3 results
   where
-    timeOrder (t,_) (t',_) = compare t' t
-
-    printTime (u,s) = do
+    printTime (u,r,s) = do
       t <- utcToLocalZonedTime u
-      putStrLn $ show t ++ " " ++ s
+      putStrLn $ show t ++ " rel:" ++ r ++ " " ++ s
 
-    skopeoInspectTime :: String -> IO (Maybe Result)
-    skopeoInspectTime reg = do
+    skopeoInspectTimeRel :: String -> IO (Maybe Image)
+    skopeoInspectTimeRel reg = do
       let ref = "docker://" ++ reg ++ "/" ++ image
       mout <- cmdMaybe "skopeo" ["inspect", ref]
-      return $ maybeParseTime (T.pack <$> mout)
+      return $ maybeParseTimeRel (mout)
         where
-          maybeParseTime :: Maybe Text -> Maybe Result
-          maybeParseTime mtxt = do
-            txt <- mtxt
-            created <- txt ^? key "Created" . _String <&> T.unpack <&> removeSplitSecs
+          maybeParseTimeRel :: Maybe String -> Maybe Image
+          maybeParseTimeRel mtxt = do
+            obj <- mtxt >>= decode . B.pack
+            created <- removeSplitSecs <$> lookupKey "Created" obj
             utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
-            return (utc,reg)
+            labels <- lookupKey "Labels" obj
+            rel <- lookupKey "release" labels
+            return (utc,rel,reg)
 
     -- docker.io has nanosec!
     removeSplitSecs :: String -> String

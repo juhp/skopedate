@@ -20,10 +20,9 @@ executable skopedate
   build-depends:       aeson
                      , base < 5
                      , bytestring
+                     , extra
+                     , http-query
                      , simple-cmd
-                     , microlens
-                     , microlens-aeson
-                     , text
                      , time
 
   ghc-options:         -Wall
