@@ -15,7 +15,7 @@ extra-doc-files:     README.md
 tested-with:         GHC == 8.4.4, GHC == 8.6.5, GHC == 8.8.4
 
 executable skopedate
-  main-is:             Main.hs
+  main-is:             src/Main.hs
 
   build-depends:       aeson
                      , base < 5
