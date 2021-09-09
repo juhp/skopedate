@@ -12,10 +12,8 @@ import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Data.Tuple.Extra
 import Network.HTTP.Query (lookupKey)
-import System.Environment (getArgs)
-
 import SimpleCmd
-
+import System.Environment (getArgs)
 
 -- FIXME add --pull
 main :: IO ()
@@ -29,7 +27,7 @@ main = do
   checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org","registry.centos.org"] image
 --  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
 
-type Image = (UTCTime, String, String)
+type Image = (UTCTime, Maybe String, String)
 
 checkRegistries :: [String] -> String -> IO ()
 checkRegistries rs image = do
@@ -38,7 +36,7 @@ checkRegistries rs image = do
   where
     printTime (u,r,s) = do
       t <- utcToLocalZonedTime u
-      putStrLn $ show t ++ " rel:" ++ r ++ " " ++ s
+      putStrLn $ show t ++ maybe "" (" rel:" ++) r ++ " " ++ s
 
     skopeoInspectTimeRel :: String -> IO (Maybe Image)
     skopeoInspectTimeRel reg = do
@@ -52,8 +50,7 @@ checkRegistries rs image = do
             created <- removeSplitSecs <$> lookupKey "Created" obj
             utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
             labels <- lookupKey "Labels" obj
-            rel <- lookupKey "release" labels
-            return (utc,rel,reg)
+            return (utc,lookupKey "release" labels,reg)
 
     -- docker.io has nanosec!
     removeSplitSecs :: String -> String
