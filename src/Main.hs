@@ -2,47 +2,56 @@
 
 module Main (main) where
 
-import Control.Monad
+import Control.Monad.Extra
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.Maybe (catMaybes)
-import Data.List (sortOn)
+import Data.Maybe
+import Data.List
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
-import Data.Tuple.Extra
 import Network.HTTP.Query (lookupKey)
 import SimpleCmd
 import System.Environment (getArgs)
 
--- FIXME add --pull
+imageRegistries :: String -> [String]
+imageRegistries image =
+  fromMaybe ["docker.io"] $ fmap snd $ listToMaybe $
+  filter (\(o,_) -> o `isPrefixOf` image) matchOS
+  where
+    matchOS :: [(String,[String])]
+    matchOS = [("fedora-toolbox",["candidate-registry.fedoraproject.org",
+                                  "registry.fedoraproject.org"]),
+               ("fedora",["candidate-registry.fedoraproject.org",
+                          "registry.fedoraproject.org",
+                          "docker.io"]),
+               ("centos", ["quay.io", "registry.centos.org","docker.io"]),
+               ("ubi", ["registry.access.redhat.com"]),
+               ("opensuse", ["registry.opensuse.org", "docker.io"])]
+
 main :: IO ()
 main = do
   args <- getArgs
-  when (null args) $ error' "Please specify an image"
-  let image = head args
-  -- FIXME be smarter about registry list based on image name
-  -- also handle UBI
-  -- FIXME make registries configurable
-  checkRegistries ["docker.io","registry.fedoraproject.org","candidate-registry.fedoraproject.org","registry.centos.org"] image
---  putStrLn $ show "docker.io" +-+ show (compare t1 t2) +-+ "fedoraproject"
+  case args of
+    [] -> error' "Please specify an image"
+    [image] -> checkRegistries image $ imageRegistries image
+    _ -> error' "Please only specify an image"
 
 type Image = (UTCTime, Maybe String, String)
 
-checkRegistries :: [String] -> String -> IO ()
-checkRegistries rs image = do
-  results <- catMaybes <$> mapM skopeoInspectTimeRel rs
-  mapM_ printTime $ sortOn fst3 results
+checkRegistries :: String -> [String] -> IO ()
+checkRegistries image registries = do
+  mapM_ skopeoInspectTimeRel registries
   where
     printTime (u,r,s) = do
       t <- utcToLocalZonedTime u
-      putStrLn $ show t ++ maybe "" (" rel:" ++) r ++ " " ++ s
+      putStrLn $ show t ++ maybe "" (" rel:" ++) r ++ "  " ++ s
 
-    skopeoInspectTimeRel :: String -> IO (Maybe Image)
+    skopeoInspectTimeRel :: String -> IO ()
     skopeoInspectTimeRel reg = do
       let ref = "docker://" ++ reg ++ "/" ++ image
       mout <- cmdMaybe "skopeo" ["inspect", ref]
-      return $ maybeParseTimeRel (mout)
+      whenJust (maybeParseTimeRel mout) printTime
         where
           maybeParseTimeRel :: Maybe String -> Maybe Image
           maybeParseTimeRel mtxt = do
