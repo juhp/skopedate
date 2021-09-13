@@ -6,7 +6,7 @@ import Control.Monad.Extra
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Maybe
-import Data.List
+import qualified Data.List as L
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
@@ -17,7 +17,7 @@ import System.Environment (getArgs)
 imageRegistries :: String -> [String]
 imageRegistries image =
   fromMaybe ["docker.io"] $ fmap snd $ listToMaybe $
-  filter (\(o,_) -> o `isPrefixOf` image) matchOS
+  filter (\(o,_) -> o `L.isPrefixOf` image) matchOS
   where
     matchOS :: [(String,[String])]
     matchOS = [("fedora-toolbox",["candidate-registry.fedoraproject.org",
