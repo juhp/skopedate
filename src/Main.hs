@@ -43,10 +43,6 @@ checkRegistries :: String -> [String] -> IO ()
 checkRegistries image registries = do
   mapM_ skopeoInspectTimeRel registries
   where
-    printTime (u,r,s) = do
-      t <- utcToLocalZonedTime u
-      putStrLn $ show t ++ maybe "" (" rel:" ++) r ++ "  " ++ s
-
     skopeoInspectTimeRel :: String -> IO ()
     skopeoInspectTimeRel reg = do
       let ref = "docker://" ++ reg ++ "/" ++ image
@@ -60,6 +56,15 @@ checkRegistries image registries = do
             utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
             labels <- lookupKey "Labels" obj
             return (utc,lookupKey "release" labels,reg)
+
+          printTime (u,mr,s) = do
+            t <- utcToLocalZonedTime u
+            putStrLn $ show t ++ maybeRel mr ++ "  " ++ s
+
+          maybeRel :: Maybe String -> String
+          maybeRel Nothing = ""
+          maybeRel (Just r) =
+            " rel:" ++ (if length r < 2 then " " else "") ++ r
 
     -- docker.io has nanosec!
     removeSplitSecs :: String -> String
