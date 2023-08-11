@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Control.Monad.Extra (when, whenJust)
+import Control.Monad.Extra (unless, when)
 import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.List.Extra (breakOn, isPrefixOf)
@@ -10,7 +10,7 @@ import Data.Time.Clock (UTCTime)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Network.HTTP.Query (lookupKey, (+/+))
-import SimpleCmd (needProgram)
+import SimpleCmd (needProgram, warning)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
 import System.Console.ANSI (clearFromCursorToLineBeginning)
 import System.IO (hFlush, hPutChar, hPutStr, stderr)
@@ -67,13 +67,21 @@ checkRegistries debug image = do
     skopeoInspectTimeRel img reg = do
       let ref = "docker://" ++ reg +/+ img
       hPutStr stderr $ if debug then ref else ' ' : reg
+      hPutChar stderr ' '
       hFlush stderr
-      (res,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
-      clearFromCursorToLineBeginning
-      hPutChar stderr '\r'
-      when (res == ExitSuccess) $ do
-        when debug $ B.putStrLn out
-        whenJust (parseTimeRel out) printTime
+      (ok,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
+      when (ok == ExitSuccess) $ do
+        when debug $ do
+          clearFromCursorToLineBeginning
+          hPutChar stderr '\r'
+          B.putStrLn out
+        case parseTimeRel out of
+          Just res -> do
+            unless debug $ do
+              clearFromCursorToLineBeginning
+              hPutChar stderr '\r'
+            printTime res
+          Nothing -> warning " image not found"
         where
           parseTimeRel :: B.ByteString -> Maybe (UTCTime, Maybe String, String)
           parseTimeRel bs = do
