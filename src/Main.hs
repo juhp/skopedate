@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP, OverloadedStrings #-}
 
 module Main (main) where
 
@@ -12,7 +12,14 @@ import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
-import System.Process.Typed (proc, readProcessStdout, ExitCode(ExitSuccess))
+import System.Process.Typed (proc, readProcessStdout,
+#if MIN_VERSION_typed_process(0,2,8)
+                             ExitCode(ExitSuccess)
+#endif
+                            )
+#if !MIN_VERSION_typed_process(0,2,8)
+import System.Exit (ExitCode(ExitSuccess))
+#endif
 
 import Paths_skopedate
 
