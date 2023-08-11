@@ -42,6 +42,7 @@ candidate-registry.fedoraproject.org 2023-08-11 17:33:52 +0800
 ```
 
 ## Installation
+There is a [Copr repo](https://copr.fedorainfracloud.org/coprs/petersen/skopedate/).
 
 `stack install` or `cabal install`
 
