@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Control.Monad.Extra (unless, when)
+import Control.Monad.Extra (when)
 import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.List.Extra (breakOn, isPrefixOf)
@@ -12,8 +12,7 @@ import Data.Time.LocalTime (utcToLocalZonedTime)
 import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram, warning)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
-import System.Console.ANSI (clearFromCursorToLineBeginning)
-import System.IO (hFlush, hPutChar, hPutStr, stderr)
+import System.IO (hFlush, stdout)
 import System.Process.Typed (proc, readProcessStdout,
 #if MIN_VERSION_typed_process(0,2,8)
                              ExitCode(ExitSuccess)
@@ -60,28 +59,26 @@ checkRegistries :: Bool -> String -> IO ()
 checkRegistries debug image = do
   needProgram "skopeo"
   case imageRegistries image of
-    [] -> skopeoInspectTimeRel "" image
-    regs -> mapM_ (skopeoInspectTimeRel image) regs
+    [] -> skopeoInspectTimeRel "" (length image) image
+    regs ->
+      let width = maximum $ map length regs
+      in mapM_ (skopeoInspectTimeRel image width) regs
   where
-    skopeoInspectTimeRel :: String -> String -> IO ()
-    skopeoInspectTimeRel img reg = do
+    skopeoInspectTimeRel :: String -> Int -> String -> IO ()
+    skopeoInspectTimeRel img width reg = do
       let ref = "docker://" ++ reg +/+ img
-      hPutStr stderr $ if debug then ref else ' ' : reg
-      hPutChar stderr ' '
-      hFlush stderr
+      putStr $ if debug
+               then ref
+               else reg ++ replicate (width - length reg + 1) ' '
+      hFlush stdout
       (ok,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
       when (ok == ExitSuccess) $ do
         when debug $ do
-          clearFromCursorToLineBeginning
-          hPutChar stderr '\r'
+          putChar '\n'
           B.putStrLn out
         case parseTimeRel out of
-          Just res -> do
-            unless debug $ do
-              clearFromCursorToLineBeginning
-              hPutChar stderr '\r'
-            printTime res
-          Nothing -> warning " image not found"
+          Just res -> printTime res
+          Nothing -> warning "image not found"
         where
           parseTimeRel :: B.ByteString -> Maybe (UTCTime, Maybe String, String)
           parseTimeRel bs = do

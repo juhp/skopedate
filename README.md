@@ -24,21 +24,21 @@ Available options:
 
 ```
 $ skopedate fedora:39
-2023-08-11 17:33:49 +0800  registry.fedoraproject.org
-2023-08-11 17:33:49 +0800  candidate-registry.fedoraproject.org
-2023-08-11 17:33:49 +0800  quay.io/fedora
-2023-08-05 02:23:06 +0800  docker.io
+registry.fedoraproject.org           2023-08-11 17:33:49 +0800
+candidate-registry.fedoraproject.org 2023-08-11 17:33:49 +0800
+quay.io/fedora                       2023-08-11 17:33:49 +0800
+docker.io                            2023-08-05 02:23:06 +0800
 ```
 
 ```
 $ skopedate centos/centos:stream9
-2023-08-08 11:39:14 +0800  quay.io
+quay.io 2023-08-08 11:39:14 +0800
 ```
 
 ```
 $ skopedate fedora-toolbox:39
-2023-08-11 17:33:52 +0800  registry.fedoraproject.org
-2023-08-11 17:33:52 +0800  candidate-registry.fedoraproject.org
+registry.fedoraproject.org           2023-08-11 17:33:52 +0800
+candidate-registry.fedoraproject.org 2023-08-11 17:33:52 +0800
 ```
 
 ## Installation
