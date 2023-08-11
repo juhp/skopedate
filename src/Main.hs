@@ -5,7 +5,7 @@ module Main (main) where
 import Control.Monad.Extra (when, whenJust)
 import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.List.Extra (dropWhileEnd)
+import Data.List.Extra (breakOn, isPrefixOf)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Network.HTTP.Query (lookupKey, (+/+))
@@ -24,26 +24,25 @@ import Paths_skopedate
 
 imageRegistries :: String -> [String]
 imageRegistries image =
-  case lookup image matchOS of
-    Just rs -> rs
-    Nothing ->
-      if '/' `elem`  image
-      then
-        case dropWhileEnd (/= '/') image of
-          "" -> ["docker.io"]
-          loc ->
-            if '.' `elem` loc
+  let (untagged,_tag) = breakOn ":" image
+  in
+    case filter (\(i,_) -> i `isPrefixOf` untagged) matchOS of
+      (_,rs):_ -> rs
+      [] ->
+        case breakOn "/" untagged of
+          (_, "") -> ["docker.io"]
+          (before,_after) ->
+            if '.' `elem` before
             then []
             else ["docker.io"]
-      else ["docker.io"]
   where
     matchOS :: [(String,[String])]
-    matchOS = [("fedora-toolbox",["candidate-registry.fedoraproject.org",
-                                  "registry.fedoraproject.org"]),
-               ("fedora",["candidate-registry.fedoraproject.org",
-                          "registry.fedoraproject.org",
-                          "docker.io",
-                          "quay.io/fedora"]),
+    matchOS = [("fedora-toolbox",["registry.fedoraproject.org",
+                                  "candidate-registry.fedoraproject.org"]),
+               ("fedora",["registry.fedoraproject.org",
+                          "candidate-registry.fedoraproject.org",
+                          "quay.io/fedora",
+                          "docker.io"]),
                ("centos", ["quay.io", "registry.centos.org","docker.io"]),
                ("ubi", ["registry.access.redhat.com"]),
                ("opensuse", ["registry.opensuse.org", "docker.io"])]
