@@ -8,7 +8,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.List.Extra (dropWhileEnd)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
-import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
@@ -78,23 +77,21 @@ checkRegistries debug image = do
           parseTimeRel :: B.ByteString -> Maybe Image
           parseTimeRel bs = do
             obj <- decode bs
-            created <- removeSplitSecs <$> lookupKey "Created" obj
-            utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
+            utc <- lookupKey "Created" obj
             labels <- lookupKey "Labels" obj
             return (utc,lookupKey "release" labels,reg)
 
           printTime (u,mr,s) = do
             t <- utcToLocalZonedTime u
-            putStrLn $ show t ++ maybeRel mr ++ "  " ++ s
+            putStrLn $ removeSplitSecs (show t) ++ maybeRel mr ++ "  " ++ s
+
+          removeSplitSecs :: String -> String
+          removeSplitSecs cs =
+            case break (== '.') cs of
+              (cs', "") -> cs'
+              (cs', _) -> cs' ++ "Z"
 
           maybeRel :: Maybe String -> String
           maybeRel Nothing = ""
           maybeRel (Just r) =
             " rel:" ++ (if length r < 2 then " " else "") ++ r
-
-    -- docker.io has nanosec!
-    removeSplitSecs :: String -> String
-    removeSplitSecs cs =
-      case break (== '.') cs of
-        (cs', "") -> cs'
-        (cs', _) -> cs' ++ "Z"
