@@ -7,6 +7,7 @@ import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.List.Extra (breakOn, isPrefixOf)
 import Data.Time.Clock (UTCTime)
+import Data.Time.Format (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram)
@@ -83,13 +84,7 @@ checkRegistries debug image = do
 
           printTime (u,mr,s) = do
             t <- utcToLocalZonedTime u
-            putStrLn $ removeSplitSecs (show t) ++ maybeRel mr ++ "  " ++ s
-
-          removeSplitSecs :: String -> String
-          removeSplitSecs cs =
-            case break (== '.') cs of
-              (cs', "") -> cs'
-              (cs', _) -> cs' ++ "Z"
+            putStrLn $ formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S %z" t ++ maybeRel mr ++ "  " ++ s
 
           maybeRel :: Maybe String -> String
           maybeRel Nothing = ""
