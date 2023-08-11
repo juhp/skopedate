@@ -26,6 +26,7 @@ executable skopedate
   other-modules:       Paths_skopedate
 
   build-depends:       aeson
+                     , ansi-terminal
                      , base < 5
                      , bytestring
                      , extra
