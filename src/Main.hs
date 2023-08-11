@@ -80,16 +80,16 @@ checkRegistries debug image = do
           Just res -> printTime res
           Nothing -> warning "image not found"
         where
-          parseTimeRel :: B.ByteString -> Maybe (UTCTime, Maybe String, String)
+          parseTimeRel :: B.ByteString -> Maybe (UTCTime, Maybe String)
           parseTimeRel bs = do
             obj <- decode bs
             utc <- lookupKey "Created" obj
-            labels <- lookupKey "Labels" obj
-            return (utc,lookupKey "release" labels,reg)
+            let mlabels = lookupKey "Labels" obj
+            return (utc, mlabels >>= lookupKey "release")
 
-          printTime (u,mr,s) = do
+          printTime (u,mr) = do
             t <- utcToLocalZonedTime u
-            putStrLn $ formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S %z" t ++ maybeRel mr ++ "  " ++ s
+            putStrLn $ formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S %z" t ++ maybeRel mr
 
           maybeRel :: Maybe String -> String
           maybeRel Nothing = ""
