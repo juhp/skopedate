@@ -2,25 +2,23 @@
 
 module Main (main) where
 
-import Control.Monad.Extra
-import Data.Aeson
+import Control.Monad.Extra (when, whenJust)
+import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.Maybe
-import qualified Data.List as L
+import Data.Maybe (fromMaybe)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Network.HTTP.Query (lookupKey)
-import SimpleCmd
-import SimpleCmdArgs
+import SimpleCmd (needProgram)
+import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
 import System.Process.Typed (proc, readProcessStdout, ExitCode(ExitSuccess))
 
 import Paths_skopedate
 
 imageRegistries :: String -> [String]
 imageRegistries image =
-  fromMaybe ["docker.io"] $ fmap snd $ listToMaybe $
-  filter (\(o,_) -> o `L.isPrefixOf` image) matchOS
+  fromMaybe ["docker.io"] $ lookup image matchOS
   where
     matchOS :: [(String,[String])]
     matchOS = [("fedora-toolbox",["candidate-registry.fedoraproject.org",
