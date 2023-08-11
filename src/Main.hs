@@ -43,7 +43,7 @@ imageRegistries image =
                           "candidate-registry.fedoraproject.org",
                           "quay.io/fedora",
                           "docker.io"]),
-               ("centos", ["quay.io", "registry.centos.org","docker.io"]),
+               ("centos", ["quay.io"]),
                ("ubi", ["registry.access.redhat.com"]),
                ("opensuse", ["registry.opensuse.org", "docker.io"])]
 
