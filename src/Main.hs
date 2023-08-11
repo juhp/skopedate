@@ -24,6 +24,14 @@ import System.Exit (ExitCode(ExitSuccess))
 
 import Paths_skopedate
 
+main :: IO ()
+main = do
+  simpleCmdArgs (Just version) "Checks dates of latest container images"
+    "A tool for seeing the dates of latest container images in registries" $
+    checkRegistries
+    <$> switchWith 'd' "debug" "show json output"
+    <*> strArg "IMAGE"
+
 imageRegistries :: String -> [String]
 imageRegistries image =
   let (untagged,_tag) = breakOn ":" image
@@ -47,17 +55,9 @@ imageRegistries image =
                ("ubi", ["registry.access.redhat.com"]),
                ("opensuse", ["registry.opensuse.org", "docker.io"])]
 
-main :: IO ()
-main = do
-  needProgram "skopeo"
-  simpleCmdArgs (Just version) "Check dates of latest container images"
-    "description" $
-    checkRegistries
-    <$> switchWith 'd' "debug" "show json output"
-    <*> strArg "IMAGE"
-
 checkRegistries :: Bool -> String -> IO ()
 checkRegistries debug image = do
+  needProgram "skopeo"
   case imageRegistries image of
     [] -> skopeoInspectTimeRel "" image
     regs -> mapM_ (skopeoInspectTimeRel image) regs
