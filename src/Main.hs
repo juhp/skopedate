@@ -26,8 +26,9 @@ import Paths_skopedate
 
 main :: IO ()
 main = do
-  simpleCmdArgs (Just version) "Checks dates of latest container images"
-    "A tool for seeing the dates of latest container images in registries" $
+  simpleCmdArgs (Just version)
+    "A tool for checking dates of registry container images"
+    "See https://github.com/juhp/skopedate#readme" $
     checkRegistries
     <$> switchWith 'd' "debug" "show debug output"
     <*> strArg "IMAGE"
