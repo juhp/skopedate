@@ -57,8 +57,6 @@ main = do
     <$> switchWith 'd' "debug" "show json output"
     <*> strArg "IMAGE"
 
-type Image = (UTCTime, Maybe String, String)
-
 checkRegistries :: Bool -> String -> IO ()
 checkRegistries debug image = do
   case imageRegistries image of
@@ -74,7 +72,7 @@ checkRegistries debug image = do
         when debug $ B.putStrLn out
         whenJust (parseTimeRel out) printTime
         where
-          parseTimeRel :: B.ByteString -> Maybe Image
+          parseTimeRel :: B.ByteString -> Maybe (UTCTime, Maybe String, String)
           parseTimeRel bs = do
             obj <- decode bs
             utc <- lookupKey "Created" obj
