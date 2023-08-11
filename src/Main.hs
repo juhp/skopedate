@@ -5,11 +5,11 @@ module Main (main) where
 import Control.Monad.Extra (when, whenJust)
 import Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.Maybe (fromMaybe)
+import Data.List.Extra (dropWhileEnd)
 import Data.Time.Clock (UTCTime)
 import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
-import Network.HTTP.Query (lookupKey)
+import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
 import System.Process.Typed (proc, readProcessStdout, ExitCode(ExitSuccess))
@@ -18,7 +18,18 @@ import Paths_skopedate
 
 imageRegistries :: String -> [String]
 imageRegistries image =
-  fromMaybe ["docker.io"] $ lookup image matchOS
+  case lookup image matchOS of
+    Just rs -> rs
+    Nothing ->
+      if '/' `elem`  image
+      then
+        case dropWhileEnd (/= '/') image of
+          "" -> ["docker.io"]
+          loc ->
+            if '.' `elem` loc
+            then []
+            else ["docker.io"]
+      else ["docker.io"]
   where
     matchOS :: [(String,[String])]
     matchOS = [("fedora-toolbox",["candidate-registry.fedoraproject.org",
@@ -44,11 +55,14 @@ type Image = (UTCTime, Maybe String, String)
 
 checkRegistries :: Bool -> String -> IO ()
 checkRegistries debug image = do
-  mapM_ skopeoInspectTimeRel $ imageRegistries image
+  case imageRegistries image of
+    [] -> skopeoInspectTimeRel "" image
+    regs -> mapM_ (skopeoInspectTimeRel image) regs
   where
-    skopeoInspectTimeRel :: String -> IO ()
-    skopeoInspectTimeRel reg = do
-      let ref = "docker://" ++ reg ++ "/" ++ image
+    skopeoInspectTimeRel :: String -> String -> IO ()
+    skopeoInspectTimeRel img reg = do
+      let ref = "docker://" ++ reg +/+ img
+      print ref
       (res,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
       when (res == ExitSuccess) $ do
         when debug $ B.putStrLn out
