@@ -30,7 +30,7 @@ main = do
   simpleCmdArgs (Just version) "Checks dates of latest container images"
     "A tool for seeing the dates of latest container images in registries" $
     checkRegistries
-    <$> switchWith 'd' "debug" "show json output"
+    <$> switchWith 'd' "debug" "show debug output"
     <*> strArg "IMAGE"
 
 imageRegistries :: String -> [String]
