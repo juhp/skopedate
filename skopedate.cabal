@@ -23,6 +23,7 @@ source-repository head
 
 executable skopedate
   main-is:             src/Main.hs
+  other-modules:       Paths_skopedate
 
   build-depends:       aeson
                      , base < 5
@@ -30,6 +31,7 @@ executable skopedate
                      , extra
                      , http-query
                      , simple-cmd >= 0.2.1
+                     , simple-cmd-args
                      , time
   default-language:    Haskell2010
 

@@ -12,7 +12,9 @@ import Data.Time.LocalTime (utcToLocalZonedTime)
 import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Network.HTTP.Query (lookupKey)
 import SimpleCmd
-import System.Environment (getArgs)
+import SimpleCmdArgs
+
+import Paths_skopedate
 
 imageRegistries :: String -> [String]
 imageRegistries image =
@@ -33,17 +35,17 @@ imageRegistries image =
 main :: IO ()
 main = do
   needProgram "skopeo"
-  args <- getArgs
-  case args of
-    [] -> error' "Please specify an image"
-    [image] -> checkRegistries image $ imageRegistries image
-    _ -> error' "Please only specify an image"
+  simpleCmdArgs (Just version) "Check dates of latest container images"
+    "description" $
+    checkRegistries
+    <$> switchWith 'd' "debug" "debug output"
+    <*> strArg "IMAGE"
 
 type Image = (UTCTime, Maybe String, String)
 
-checkRegistries :: String -> [String] -> IO ()
-checkRegistries image registries = do
-  mapM_ skopeoInspectTimeRel registries
+checkRegistries :: Bool -> String -> IO ()
+checkRegistries debug image = do
+  mapM_ skopeoInspectTimeRel $ imageRegistries image
   where
     skopeoInspectTimeRel :: String -> IO ()
     skopeoInspectTimeRel reg = do
