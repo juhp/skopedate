@@ -13,6 +13,7 @@ import Data.Time.Format (defaultTimeLocale, iso8601DateFormat, parseTimeM)
 import Network.HTTP.Query (lookupKey)
 import SimpleCmd
 import SimpleCmdArgs
+import System.Process.Typed (proc, readProcessStdout, ExitCode(ExitSuccess))
 
 import Paths_skopedate
 
@@ -38,7 +39,7 @@ main = do
   simpleCmdArgs (Just version) "Check dates of latest container images"
     "description" $
     checkRegistries
-    <$> switchWith 'd' "debug" "debug output"
+    <$> switchWith 'd' "debug" "show json output"
     <*> strArg "IMAGE"
 
 type Image = (UTCTime, Maybe String, String)
@@ -50,12 +51,14 @@ checkRegistries debug image = do
     skopeoInspectTimeRel :: String -> IO ()
     skopeoInspectTimeRel reg = do
       let ref = "docker://" ++ reg ++ "/" ++ image
-      mout <- cmdMaybe "skopeo" ["inspect", ref]
-      whenJust (maybeParseTimeRel mout) printTime
+      (res,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
+      when (res == ExitSuccess) $ do
+        when debug $ B.putStrLn out
+        whenJust (parseTimeRel out) printTime
         where
-          maybeParseTimeRel :: Maybe String -> Maybe Image
-          maybeParseTimeRel mtxt = do
-            obj <- mtxt >>= decode . B.pack
+          parseTimeRel :: B.ByteString -> Maybe Image
+          parseTimeRel bs = do
+            obj <- decode bs
             created <- removeSplitSecs <$> lookupKey "Created" obj
             utc <- parseTimeM False defaultTimeLocale (iso8601DateFormat (Just "%H:%M:%SZ")) created
             labels <- lookupKey "Labels" obj
