@@ -31,6 +31,7 @@ imageRegistries image =
 
 main :: IO ()
 main = do
+  needProgram "skopeo"
   args <- getArgs
   case args of
     [] -> error' "Please specify an image"

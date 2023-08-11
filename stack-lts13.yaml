@@ -1,0 +1,4 @@
+resolver: lts-13.30
+extra-deps:
+  - http-query-0.1.0
+  - simple-cmd-0.2.1
