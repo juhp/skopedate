@@ -24,7 +24,8 @@ imageRegistries image =
                                   "registry.fedoraproject.org"]),
                ("fedora",["candidate-registry.fedoraproject.org",
                           "registry.fedoraproject.org",
-                          "docker.io"]),
+                          "docker.io",
+                          "quay.io/fedora"]),
                ("centos", ["quay.io", "registry.centos.org","docker.io"]),
                ("ubi", ["registry.access.redhat.com"]),
                ("opensuse", ["registry.opensuse.org", "docker.io"])]
