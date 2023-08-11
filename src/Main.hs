@@ -34,9 +34,7 @@ imageRegistries image =
         case breakOn "/" untagged of
           (_, "") -> ["docker.io"]
           (before,_after) ->
-            if '.' `elem` before
-            then []
-            else ["docker.io"]
+            ["docker.io" | '.' `notElem` before]
   where
     matchOS :: [(String,[String])]
     matchOS = [("fedora-toolbox",["registry.fedoraproject.org",
