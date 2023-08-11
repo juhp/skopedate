@@ -13,7 +13,7 @@ import Network.HTTP.Query (lookupKey, (+/+))
 import SimpleCmd (needProgram)
 import SimpleCmdArgs (simpleCmdArgs, switchWith, strArg)
 import System.Console.ANSI (clearFromCursorToLineBeginning)
-import System.IO (hFlush, stdout)
+import System.IO (hFlush, hPutChar, hPutStr, stderr)
 import System.Process.Typed (proc, readProcessStdout,
 #if MIN_VERSION_typed_process(0,2,8)
                              ExitCode(ExitSuccess)
@@ -66,11 +66,11 @@ checkRegistries debug image = do
     skopeoInspectTimeRel :: String -> String -> IO ()
     skopeoInspectTimeRel img reg = do
       let ref = "docker://" ++ reg +/+ img
-      putStr $ if debug then ref else ' ' : reg
-      hFlush stdout
+      hPutStr stderr $ if debug then ref else ' ' : reg
+      hFlush stderr
       (res,out) <- readProcessStdout $ proc "skopeo" ["inspect", ref]
       clearFromCursorToLineBeginning
-      putChar '\r'
+      hPutChar stderr '\r'
       when (res == ExitSuccess) $ do
         when debug $ B.putStrLn out
         whenJust (parseTimeRel out) printTime
