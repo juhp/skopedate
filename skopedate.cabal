@@ -1,7 +1,8 @@
 name:                skopedate
 version:             0.1
 synopsis:            Check dates of container images
-description:         Check dates of container images
+description:         This tool checks the dates of a container image in
+                     registries.
 license:             MIT
 license-file:        LICENSE
 author:              Jens Petersen <petersen@redhat.com>
@@ -23,6 +24,7 @@ source-repository head
 
 executable skopedate
   main-is:             src/Main.hs
+  autogen-modules:       Paths_skopedate
   other-modules:       Paths_skopedate
 
   build-depends:       aeson
